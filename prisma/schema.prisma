@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime       @default(now())
+  projects      Project[]
+  messages      Message[]
+  subscription  Subscription?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Subscription {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  stripeCustomerId   String?
+  planTier           String   @default("free")
+  status             String   @default("active")
+  monthlyUsageCount  Int      @default(0)
+  usageResetAt       DateTime @default(now())
+  createdAt          DateTime @default(now())
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  title        String
+  createdAt    DateTime      @default(now())
+  messages     Message[]
+  planRequest  PlanRequest?
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  role       String
+  content    String
+  createdAt  DateTime @default(now())
+}
+
+model PlanRequest {
+  id          String      @id @default(uuid())
+  projectId   String      @unique
+  project     Project     @relation(fields: [projectId], references: [id])
+  plotLength  Float
+  plotWidth   Float
+  bedrooms    Int
+  bathrooms   Int
+  hasKitchen  Boolean     @default(true)
+  budgetRange String?
+  createdAt   DateTime    @default(now())
+  floorPlan   FloorPlan?
+}
+
+model FloorPlan {
+  id             String      @id @default(uuid())
+  planRequestId  String      @unique
+  planRequest    PlanRequest @relation(fields: [planRequestId], references: [id])
+  svgData        String
+  roadmapText    String
+  createdAt      DateTime    @default(now())
+}
