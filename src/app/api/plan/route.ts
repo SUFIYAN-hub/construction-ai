@@ -43,7 +43,7 @@ const result = await ai.models.generateContent({
     systemInstruction: "You are a construction planning assistant. Give practical, step-by-step house-building roadmaps in markdown. Cover: approvals/permits, foundation type suited to plot size, structural approach, rough construction sequence and timeline, and key budget considerations. Keep it concise and actionable. Note where a licensed structural engineer's sign-off is required.",
   },
 })
-const roadmapText = result.text
+const roadmapText = result.text ?? ""
 
     const planRequest = await prisma.planRequest.create({
       data: {

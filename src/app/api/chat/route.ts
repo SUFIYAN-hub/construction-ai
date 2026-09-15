@@ -49,7 +49,7 @@ const result = await ai.models.generateContent({
     systemInstruction: "You are a construction and civil engineering assistant. Answer questions about construction methods, materials, structural basics, codes, and building processes clearly and practically. If a question needs a licensed engineer's sign-off (structural safety calculations, legal compliance), say so.",
   },
 })
-const reply = result.text
+const reply = result.text ?? ""
 
     // Save the AI's reply
     await prisma.message.create({
