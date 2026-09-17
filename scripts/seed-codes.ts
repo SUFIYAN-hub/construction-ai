@@ -1,16 +1,29 @@
+import fs from "fs"
+import path from "path"
+import { parse } from "csv-parse/sync"
 import { addCodeReference } from "../src/lib/rag"
-
-const chunks = [
-  { source: "NBC 2016 - Foundations", content: "For residential buildings up to 2 storeys on ordinary soil, minimum foundation depth is typically 1.2 to 1.5 meters below ground level, adjusted for soil bearing capacity and local frost/water table conditions." },
-  { source: "NBC 2016 - Room Sizes", content: "Minimum habitable room area is 9.5 sq m with a width not less than 2.4 m. Kitchen minimum area is 5.5 sq m. Bathroom minimum area is 1.8 sq m." },
-  { source: "NBC 2016 - Setbacks", content: "Front setback for residential plots is typically 3m for plots under 200 sq m, increasing with plot size per local municipal bylaws; side and rear setbacks are commonly 1.5m to 3m depending on building height." },
-]
+import { prisma } from "../src/lib/db"
 
 async function main() {
-  for (const chunk of chunks) {
-    await addCodeReference(chunk.source, chunk.content)
-    console.log("Added:", chunk.source)
+  const filePath = path.join(process.cwd(), "data", "building-codes.csv")
+  const fileContent = fs.readFileSync(filePath, "utf-8")
+  const records: { source: string; category: string; content: string }[] = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+  })
+
+  console.log(`Found ${records.length} entries. Clearing old data...`)
+  await prisma.$executeRawUnsafe(`DELETE FROM "CodeReference"`)
+
+  for (const row of records) {
+    await addCodeReference(`${row.source} [${row.category}]`, row.content)
+    console.log("Added:", row.source)
   }
+
+  console.log("Done.")
 }
 
-main()
+main().then(() => process.exit(0)).catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
