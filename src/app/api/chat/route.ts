@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 })
     }
 
-    const { message } = await req.json()
+    const { message, projectId } = await req.json()
 
     const user = await prisma.user.findUnique({ where: { email: session.user.email } })
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -22,10 +22,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "You've reached your free monthly limit. Upgrade to Pro for unlimited access.", limitReached: true }, { status: 403 })
     }
 
-    let project = await prisma.project.findFirst({ where: { userId: user.id } })
-    if (!project) {
+    // Use the given project, or create a new one if this is a fresh chat
+    let project
+    if (projectId) {
+      project = await prisma.project.findFirst({ where: { id: projectId, userId: user.id } })
+      if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    } else {
       project = await prisma.project.create({
-        data: { userId: user.id, title: "General Q&A" },
+        data: { userId: user.id, title: message.slice(0, 50) },
       })
     }
 
@@ -51,7 +55,7 @@ export async function POST(req: Request) {
       data: { projectId: project.id, userId: user.id, role: "assistant", content: reply },
     })
 
-    return NextResponse.json({ reply })
+    return NextResponse.json({ reply, projectId: project.id })
   } catch (err: any) {
     console.error("Chat API error:", err)
     return NextResponse.json({ error: err.message || "Something went wrong" }, { status: 500 })

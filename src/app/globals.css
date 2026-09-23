@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: #FAFAF8;
-  --sidebar: #F3F3F1;
-  --border: #E3E2DD;
-  --text: #1C1E1B;
-  --muted: #8A8A82;
-  --steel: #2B5876;
-  --orange: #D9541E;
+  --concrete: #E7E3DB;
+  --concrete-panel: #F1EEE7;
+  --ink: #211F1B;
+  --blue: #1E4FBF;
+  --rust: #B5502A;
+  --steel: #8C887E;
+  --border: #D5D1C7;
 }
 
 * { box-sizing: border-box; }
@@ -15,16 +15,41 @@
 body {
   margin: 0;
   font-family: 'IBM Plex Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--concrete);
+  color: var(--ink);
 }
 
-h1, h2, h3, .display { font-family: 'Space Grotesk', sans-serif; }
+.display {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 800;
+  font-stretch: expanded;
+  letter-spacing: -0.01em;
+}
+
 .mono { font-family: 'IBM Plex Mono', monospace; }
+
+@keyframes chalk-snap {
+  from { width: 0; opacity: 0.4; }
+  to { width: 56px; opacity: 1; }
+}
+.chalk-line {
+  height: 3px;
+  background: var(--blue);
+  animation: chalk-snap 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
 
 .msg-content p { margin: 0 0 12px; line-height: 1.65; }
 .msg-content ul { margin: 0 0 12px; padding-left: 20px; }
 .msg-content li { margin-bottom: 6px; line-height: 1.6; }
 .msg-content strong { font-weight: 600; }
-.msg-content h3 { font-size: 16px; margin: 20px 0 8px; }
+.msg-content h3 { font-size: 15px; margin: 18px 0 8px; font-weight: 600; }
 .msg-content h3:first-child { margin-top: 0; }
+
+button:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chalk-line { animation: none; width: 56px; opacity: 1; }
+}
