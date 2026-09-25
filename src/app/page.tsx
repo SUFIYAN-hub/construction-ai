@@ -1,6 +1,8 @@
 import { auth, signIn } from "../../auth"
 import { Sidebar } from "./Sidebar"
 import { ChatTest } from "./ChatTest"
+import { PersonaPicker } from "./PersonaPicker"
+import { prisma } from "@/lib/db"
 
 export default async function Home() {
   const session = await auth()
@@ -22,6 +24,11 @@ export default async function Home() {
         </div>
       </main>
     )
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: session.user?.email || "" } })
+  if (!user?.persona) {
+    return <PersonaPicker />
   }
 
   return (

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { checkAndIncrementUsage } from "@/lib/usage"
 import { retrieveRelevantCodes } from "@/lib/rag"
+import { getSystemPrompt } from "@/lib/personas"
 
 export async function POST(req: Request) {
   try {
@@ -42,12 +43,13 @@ export async function POST(req: Request) {
     const contextText = codeContext.map(c => `[${c.source}]: ${c.content}`).join("\n")
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-    const result = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: `Reference NBC 2016 context (use this as your primary source when relevant; cite the clause number if context is used):\n${contextText}\n\nUser question: ${message}`,
-      config: {
-        systemInstruction: "You are a construction and civil engineering assistant. Answer using the provided reference context when it's relevant to the question — cite the exact clause number from the context rather than inventing figures. If the reference context doesn't cover the question, answer from general engineering knowledge but clearly say the answer is general guidance, not a specific NBC citation, and recommend the user verify with local municipal byelaws or a licensed engineer. Never state a specific number as an NBC requirement unless it's explicitly present in the provided context.",
-      },
+    const baseInstruction = "You are a construction and civil engineering assistant. Answer using the provided reference context when it's relevant to the question — cite the exact clause number from the context rather than inventing figures. If the reference context doesn't cover the question, answer from general engineering knowledge but clearly say the answer is general guidance, not a specific NBC citation, and recommend the user verify with local municipal byelaws or a licensed engineer. Never state a specific number as an NBC requirement unless it's explicitly present in the provided context."
+   const result = await ai.models.generateContent({
+  model: "gemini-3.6-flash",
+  contents: `Reference NBC 2016 context (use this as your primary source when relevant; cite the clause number if context is used):\n${contextText}\n\nUser question: ${message}`,
+  config: {
+    systemInstruction: getSystemPrompt(user.persona as any, baseInstruction),
+  },
     })
     const reply = result.text ?? ""
 

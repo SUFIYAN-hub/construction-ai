@@ -70,6 +70,9 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           }}>
             Sign out
           </button>
+          <Link href="/settings" style={{ fontSize: 13, color: "var(--steel)", marginBottom: 8, display: "block" }}>
+  Change mode
+</Link>
         </form>
       </div>
     </aside>
