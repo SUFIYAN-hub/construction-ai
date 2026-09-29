@@ -73,6 +73,7 @@ model Project {
   userId       String
   user         User          @relation(fields: [userId], references: [id])
   title        String
+  shareToken   String?       @unique
   createdAt    DateTime      @default(now())
   messages     Message[]
   planRequest  PlanRequest?

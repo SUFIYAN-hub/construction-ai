@@ -53,3 +53,11 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .chalk-line { animation: none; width: 56px; opacity: 1; }
 }
+
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: white; }
+  aside, .no-print { display: none !important; }
+  .app-shell { display: block !important; height: auto !important; }
+  .app-main { overflow: visible !important; height: auto !important; }
+}

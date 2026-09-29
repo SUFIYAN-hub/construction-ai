@@ -1,12 +1,13 @@
 "use client"
 import { useState, type CSSProperties } from "react"
 import ReactMarkdown from "react-markdown"
-
+import { useRouter } from "next/navigation"
 
 export function PlanForm() {
   const [form, setForm] = useState({ plotLength: 10, plotWidth: 8, bedrooms: 2, bathrooms: 2, hasKitchen: true, budgetRange: "" })
   const [result, setResult] = useState<{ svgData: string; roadmapText: string } | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   async function submit() {
     setLoading(true)
@@ -19,7 +20,7 @@ export function PlanForm() {
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      setResult(data)
+      router.push(`/project/${data.projectId}`)
     } catch (err: any) {
       alert(err.message)
     } finally {

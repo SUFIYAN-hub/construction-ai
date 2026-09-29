@@ -19,12 +19,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   })
   if (!project) redirect("/")
 
+  const plan = project.planRequest
+
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div className="app-shell" style={{ display: "flex", height: "100vh" }}>
       <Sidebar userEmail={session.user.email} />
-      <main style={{ flex: 1, overflowY: "auto" }}>
-        {project.planRequest?.floorPlan ? (
-          <PlanView title={project.title} svgData={project.planRequest.floorPlan.svgData} roadmapText={project.planRequest.floorPlan.roadmapText} />
+      <main className="app-main" style={{ flex: 1, overflowY: "auto" }}>
+        {plan?.floorPlan ? (
+          <PlanView
+            title={project.title}
+            svgData={plan.floorPlan.svgData}
+            roadmapText={plan.floorPlan.roadmapText}
+            summary={`${plan.plotLength} m × ${plan.plotWidth} m plot · ${plan.bedrooms} bed · ${plan.bathrooms} bath${plan.hasKitchen ? " · kitchen" : ""}`}
+            projectId={project.id}
+            shareToken={project.shareToken}
+          />
         ) : (
           <ChatTest projectId={project.id} title={project.title} />
         )}
