@@ -1,13 +1,16 @@
 import ReactMarkdown from "react-markdown"
 import { PlanActions } from "./PlanActions"
+import { ComplianceChecklist } from "./ComplianceChecklist"
+import type { Check } from "@/lib/floorplan"
 
-export function PlanView({ title, svgData, roadmapText, summary, projectId, shareToken }: {
+export function PlanView({ title, svgData, roadmapText, summary, projectId, shareToken, checks }: {
   title: string
   svgData: string
   roadmapText: string
   summary?: string
   projectId?: string
   shareToken?: string | null
+  checks?: Check[]
 }) {
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 32px" }}>
@@ -25,6 +28,8 @@ export function PlanView({ title, svgData, roadmapText, summary, projectId, shar
       <div className="chalk-line" style={{ marginTop: 8, marginBottom: 20 }} />
       <div style={{ border: "1px solid var(--border)", background: "white", padding: 16, marginBottom: 40 }}
         dangerouslySetInnerHTML={{ __html: svgData }} />
+
+      <ComplianceChecklist checks={checks ?? []} />
 
       <div className="display" style={{ fontSize: 17 }}>Roadmap</div>
       <div className="chalk-line" style={{ marginTop: 8, marginBottom: 20 }} />

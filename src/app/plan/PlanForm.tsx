@@ -1,17 +1,33 @@
 "use client"
 import { useState, type CSSProperties } from "react"
-import ReactMarkdown from "react-markdown"
 import { useRouter } from "next/navigation"
 
+const ROAD_OPTIONS = [
+  { value: 4.5, label: "Under 6 m (narrow lane)" },
+  { value: 6.5, label: "6 – 7.5 m" },
+  { value: 12, label: "7.5 – 18 m (typical colony road)" },
+  { value: 24, label: "18 – 30 m" },
+  { value: 36, label: "Above 30 m" },
+]
+
+const HOUSE_TYPES = [
+  { value: "detached", label: "Detached: open space on all sides" },
+  { value: "semi-detached", label: "Semi-detached: shares one side wall" },
+  { value: "row", label: "Row house: shares both side walls" },
+]
+
 export function PlanForm() {
-  const [form, setForm] = useState({ plotLength: 10, plotWidth: 8, bedrooms: 2, bathrooms: 2, hasKitchen: true, budgetRange: "" })
-  const [result, setResult] = useState<{ svgData: string; roadmapText: string } | null>(null)
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [form, setForm] = useState({
+    plotLength: 18, plotWidth: 12, bedrooms: 2, bathrooms: 2,
+    hasKitchen: true, roadWidth: 12, houseType: "detached", budgetRange: "",
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   async function submit() {
     setLoading(true)
-    setResult(null)
+    setError("")
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -19,19 +35,18 @@ export function PlanForm() {
         body: JSON.stringify(form),
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error || "Something went wrong")
       router.push(`/project/${data.projectId}`)
     } catch (err: any) {
-      alert(err.message)
-    } finally {
+      setError(err.message)
       setLoading(false)
     }
   }
 
- const fieldStyle: CSSProperties = {
+  const fieldStyle: CSSProperties = {
     width: "100%", padding: "10px 12px", marginTop: 6,
     border: "1px solid var(--border)", background: "white",
-    fontFamily: "IBM Plex Sans", fontSize: 14
+    fontFamily: "IBM Plex Sans", fontSize: 14,
   }
   const labelStyle: CSSProperties = { fontSize: 13, color: "var(--steel)", fontWeight: 500 }
 
@@ -41,11 +56,21 @@ export function PlanForm() {
       <div className="chalk-line" style={{ marginTop: 10, marginBottom: 32 }} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 24 }}>
-        <label style={labelStyle}>Plot length (m)
+        <label style={labelStyle}>Plot width: side facing the road (m)
+          <input type="number" value={form.plotWidth} onChange={(e) => setForm({ ...form, plotWidth: +e.target.value })} style={fieldStyle} />
+        </label>
+        <label style={labelStyle}>Plot depth: front to back (m)
           <input type="number" value={form.plotLength} onChange={(e) => setForm({ ...form, plotLength: +e.target.value })} style={fieldStyle} />
         </label>
-        <label style={labelStyle}>Plot width (m)
-          <input type="number" value={form.plotWidth} onChange={(e) => setForm({ ...form, plotWidth: +e.target.value })} style={fieldStyle} />
+        <label style={labelStyle}>Road in front of the plot
+          <select value={form.roadWidth} onChange={(e) => setForm({ ...form, roadWidth: +e.target.value })} style={fieldStyle}>
+            {ROAD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </label>
+        <label style={labelStyle}>House type
+          <select value={form.houseType} onChange={(e) => setForm({ ...form, houseType: e.target.value })} style={fieldStyle}>
+            {HOUSE_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
         </label>
         <label style={labelStyle}>Bedrooms
           <input type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: +e.target.value })} style={fieldStyle} />
@@ -65,25 +90,12 @@ export function PlanForm() {
 
       <button onClick={submit} disabled={loading} style={{
         background: "var(--blue)", color: "white", border: "none",
-        padding: "12px 28px", fontWeight: 600, cursor: "pointer", fontSize: 14
+        padding: "12px 28px", fontWeight: 600, cursor: "pointer", fontSize: 14,
       }}>
-        {loading ? "Generating..." : "Generate Plan"}
+        {loading ? "Generating…" : "Generate Plan"}
       </button>
 
-      {result && (
-        <div style={{ marginTop: 48 }}>
-          <div className="display" style={{ fontSize: 17 }}>Floor Plan</div>
-          <div className="chalk-line" style={{ marginTop: 8, marginBottom: 20 }} />
-          <div style={{ border: "1px solid var(--border)", background: "white", padding: 16, marginBottom: 40 }}
-            dangerouslySetInnerHTML={{ __html: result.svgData }} />
-
-          <div className="display" style={{ fontSize: 17 }}>Roadmap</div>
-          <div className="chalk-line" style={{ marginTop: 8, marginBottom: 20 }} />
-          <div className="msg-content" style={{ borderLeft: "3px solid var(--steel)", paddingLeft: 16 }}>
-            <ReactMarkdown>{result.roadmapText}</ReactMarkdown>
-          </div>
-        </div>
-      )}
+      {error && <p style={{ color: "var(--rust)", fontSize: 14, marginTop: 14 }}>{error}</p>}
     </div>
   )
 }
