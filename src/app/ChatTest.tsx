@@ -1,13 +1,16 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import ReactMarkdown from "react-markdown"
 import { useRouter } from "next/navigation"
 
+type Msg = { role: "user" | "assistant"; content: string }
+
 export function ChatTest({ projectId, title }: { projectId?: string; title?: string }) {
   const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([])
+  const [messages, setMessages] = useState<Msg[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!projectId) { setMessages([]); return }
@@ -18,8 +21,12 @@ export function ChatTest({ projectId, title }: { projectId?: string; title?: str
       })
   }, [projectId])
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages])
+
   async function sendMessage() {
-    if (!message.trim()) return
+    if (!message.trim() || loading) return
     const userMsg = message
     setMessages((prev) => [...prev, { role: "user", content: userMsg }])
     setMessage("")
@@ -30,15 +37,44 @@ export function ChatTest({ projectId, title }: { projectId?: string; title?: str
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, projectId }),
       })
-      const data = await res.json()
-      if (data.limitReached) {
-        setMessages((prev) => [...prev, { role: "assistant", content: "You've reached your free monthly limit. [Upgrade to Pro](/pricing) for unlimited access." }])
-      } else {
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply || data.error || "No response" }])
-        if (!projectId && data.projectId) router.push(`/project/${data.projectId}`)
+
+      // Errors (limit reached, not signed in, rate limit) come back as JSON
+      if (!res.ok || (res.headers.get("content-type") || "").includes("application/json")) {
+        const data = await res.json()
+        const text = data.limitReached
+          ? "You've reached your free monthly limit. [Upgrade to Pro](/pricing) for unlimited access."
+          : data.error || "No response"
+        setMessages((prev) => [...prev, { role: "assistant", content: text }])
+        return
       }
+
+      const newProjectId = res.headers.get("X-Project-Id")
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let acc = ""
+      let started = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        acc += decoder.decode(value, { stream: true })
+        const current = acc
+        if (!started) {
+          started = true
+          setLoading(false)
+          setMessages((prev) => [...prev, { role: "assistant", content: current }])
+        } else {
+          setMessages((prev) => {
+            const copy = [...prev]
+            copy[copy.length - 1] = { role: "assistant", content: current }
+            return copy
+          })
+        }
+      }
+
+      if (!projectId && newProjectId) router.push(`/project/${newProjectId}`)
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Network error — check the terminal" }])
+      setMessages((prev) => [...prev, { role: "assistant", content: "Network error. Please check your connection and try again." }])
     } finally {
       setLoading(false)
     }
@@ -58,10 +94,13 @@ export function ChatTest({ projectId, title }: { projectId?: string; title?: str
           )}
           {messages.map((m, i) => (
             <div key={i} style={{ marginBottom: 22, borderLeft: `3px solid ${m.role === "user" ? "var(--blue)" : "var(--steel)"}`, paddingLeft: 14 }}>
-              {m.role === "user" ? <p style={{ margin: 0, fontWeight: 500 }}>{m.content}</p> : <div className="msg-content"><ReactMarkdown>{m.content}</ReactMarkdown></div>}
+              {m.role === "user"
+                ? <p style={{ margin: 0, fontWeight: 500 }}>{m.content}</p>
+                : <div className="msg-content"><ReactMarkdown>{m.content}</ReactMarkdown></div>}
             </div>
           ))}
-          {loading && <p style={{ color: "var(--steel)", fontSize: 14 }}>Thinking…</p>}
+          {loading && <p style={{ color: "var(--steel)", fontSize: 14 }}>Searching the code…</p>}
+          <div ref={bottomRef} />
         </div>
       </div>
 
