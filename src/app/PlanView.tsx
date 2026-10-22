@@ -1,9 +1,10 @@
 import ReactMarkdown from "react-markdown"
 import { PlanActions } from "./PlanActions"
 import { ComplianceChecklist } from "./ComplianceChecklist"
-import type { Check } from "@/lib/floorplan"
+import { CostEstimator } from "./CostEstimator"
+import type { Check, HouseType } from "@/lib/floorplan"
 
-export function PlanView({ title, svgData, roadmapText, summary, projectId, shareToken, checks }: {
+export function PlanView({ title, svgData, roadmapText, summary, projectId, shareToken, checks, costInput }: {
   title: string
   svgData: string
   roadmapText: string
@@ -11,6 +12,7 @@ export function PlanView({ title, svgData, roadmapText, summary, projectId, shar
   projectId?: string
   shareToken?: string | null
   checks?: Check[]
+  costInput?: { plotLength: number; plotWidth: number; roadWidth: number; houseType: HouseType }
 }) {
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 32px" }}>
@@ -30,6 +32,8 @@ export function PlanView({ title, svgData, roadmapText, summary, projectId, shar
         dangerouslySetInnerHTML={{ __html: svgData }} />
 
       <ComplianceChecklist checks={checks ?? []} />
+
+      {costInput && <CostEstimator {...costInput} />}
 
       <div className="display" style={{ fontSize: 17 }}>Roadmap</div>
       <div className="chalk-line" style={{ marginTop: 8, marginBottom: 20 }} />

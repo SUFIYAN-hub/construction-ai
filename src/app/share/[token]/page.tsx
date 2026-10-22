@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
-import { parseChecks } from "@/lib/floorplan"
+import { parseChecks, type HouseType } from "@/lib/floorplan"
 import { PlanView } from "../../PlanView"
 
 export const metadata = { robots: { index: false, follow: false } }
@@ -21,6 +21,12 @@ export default async function SharedPlanPage({ params }: { params: Promise<{ tok
       svgData={plan.floorPlan.svgData}
       roadmapText={plan.floorPlan.roadmapText}
       checks={parseChecks(plan.floorPlan.complianceJson)}
+      costInput={{
+        plotLength: plan.plotLength,
+        plotWidth: plan.plotWidth,
+        roadWidth: plan.roadWidth,
+        houseType: plan.houseType as HouseType,
+      }}
       summary={`${plan.plotWidth} m frontage × ${plan.plotLength} m deep · ${plan.bedrooms} bed · ${plan.bathrooms} bath${plan.hasKitchen ? " · kitchen" : ""} · ${plan.houseType}`}
     />
   )

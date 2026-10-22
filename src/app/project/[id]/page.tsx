@@ -1,7 +1,7 @@
 import { auth } from "../../../../auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
-import { parseChecks } from "@/lib/floorplan"
+import { parseChecks, type HouseType } from "@/lib/floorplan"
 import { Sidebar } from "../../Sidebar"
 import { ChatTest } from "../../ChatTest"
 import { PlanView } from "../../PlanView"
@@ -32,6 +32,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             svgData={plan.floorPlan.svgData}
             roadmapText={plan.floorPlan.roadmapText}
             checks={parseChecks(plan.floorPlan.complianceJson)}
+            costInput={{
+              plotLength: plan.plotLength,
+              plotWidth: plan.plotWidth,
+              roadWidth: plan.roadWidth,
+              houseType: plan.houseType as HouseType,
+            }}
             summary={`${plan.plotWidth} m frontage × ${plan.plotLength} m deep · ${plan.bedrooms} bed · ${plan.bathrooms} bath${plan.hasKitchen ? " · kitchen" : ""} · ${plan.houseType}`}
             projectId={project.id}
             shareToken={project.shareToken}
